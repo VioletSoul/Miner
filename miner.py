@@ -16,7 +16,6 @@ NUMBER_COLORS = {
 }
 
 DIFFICULTIES = {
-    "Новичок": (9, 9, 10),
     "Любитель": (16, 16, 40),
     "Эксперт": (30, 16, 99)
 }
@@ -35,18 +34,7 @@ class Minesweeper(tk.Tk):
         self.title("Сапёр")
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.create_menu()
-        self.setup_game("Новичок")
-
-    def create_menu(self):
-        menubar = tk.Menu(self)
-        game_menu = tk.Menu(menubar, tearoff=0)
-        for diff in DIFFICULTIES:
-            game_menu.add_command(label=diff, command=lambda d=diff: self.setup_game(d))
-        game_menu.add_separator()
-        game_menu.add_command(label="Выход", command=self.on_close)
-        menubar.add_cascade(label="Игра", menu=game_menu)
-        self.config(menu=menubar)
+        self.setup_game("Любитель")
 
     def setup_game(self, difficulty):
         self.difficulty = difficulty
@@ -56,11 +44,10 @@ class Minesweeper(tk.Tk):
         self.timer_id = None
         self.flag_count = self.mines
         self.game_over = False
-
+        self.pressed_1 = None
+        self.pressed_3 = None
         for widget in self.winfo_children():
             widget.destroy()
-
-        # Верхняя панель
         top = tk.Frame(self, bg=BG_COLOR)
         top.pack(fill="x")
         self.mine_label = tk.Label(top, text=f"💣 {self.flag_count}", font=FONT, bg=BG_COLOR)
@@ -70,29 +57,68 @@ class Minesweeper(tk.Tk):
         self.restart_btn.pack(side="left", padx=10)
         self.timer_label = tk.Label(top, text="⏱ 0", font=FONT, bg=BG_COLOR)
         self.timer_label.pack(side="right", padx=10, pady=5)
-
-        # Игровое поле
+        for diff in DIFFICULTIES:
+            mines = DIFFICULTIES[diff][2]
+            tk.Button(top, text=f"{mines} мин", font=("Segoe UI", 10),
+                      command=lambda d=diff: self.setup_game(d)).pack(side="left", padx=2)
         self.board = [[Cell(x, y) for x in range(self.width)] for y in range(self.height)]
         self.buttons = [[None for _ in range(self.width)] for _ in range(self.height)]
         field = tk.Frame(self, bg=BG_COLOR)
         field.pack()
-
         for y in range(self.height):
             field.grid_rowconfigure(y, minsize=CELL_SIZE)
             for x in range(self.width):
                 field.grid_columnconfigure(x, minsize=CELL_SIZE)
                 btn = tk.Button(field, width=2, height=1, font=FONT, bg=BTN_COLOR,
                                 relief="raised", command=lambda x=x, y=y: self.on_left_click(x, y))
+                btn.bind("<ButtonPress-1>", lambda e, x=x, y=y: self.on_button_press(x, y, 1))
+                btn.bind("<ButtonRelease-1>", lambda e, x=x, y=y: self.on_button_release(x, y, 1))
+                btn.bind("<ButtonPress-3>", lambda e, x=x, y=y: self.on_button_press(x, y, 3))
+                btn.bind("<ButtonRelease-3>", lambda e, x=x, y=y: self.on_button_release(x, y, 3))
                 btn.bind("<Button-3>", lambda e, x=x, y=y: self.on_right_click(x, y))
                 btn.grid(row=y, column=x, padx=0, pady=0, sticky="nsew")
                 self.buttons[y][x] = btn
-
-        # Автоматически подгоняем размер окна под поле и панель
         self.update_idletasks()
         total_width = field.winfo_reqwidth()
         total_height = top.winfo_reqheight() + field.winfo_reqheight()
         self.minsize(total_width, total_height)
         self.geometry(f"{total_width}x{total_height}")
+
+    def on_button_press(self, x, y, button):
+        if button == 1:
+            self.pressed_1 = (x, y)
+        elif button == 3:
+            self.pressed_3 = (x, y)
+
+    def on_button_release(self, x, y, button):
+        if self.pressed_1 == self.pressed_3 == (x, y) and self.board[y][x].is_open:
+            self.chord_open(x, y)
+        if button == 1:
+            self.pressed_1 = None
+        elif button == 3:
+            self.pressed_3 = None
+
+    def chord_open(self, x, y):
+        cell = self.board[y][x]
+        if not cell.is_open or cell.adjacent == 0 or self.game_over:
+            return
+        flag_count = 0
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                nx, ny = x+dx, y+dy
+                if (dx != 0 or dy != 0) and 0 <= nx < self.width and 0 <= ny < self.height:
+                    if self.board[ny][nx].is_flag:
+                        flag_count += 1
+        if flag_count == cell.adjacent:
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    nx, ny = x+dx, y+dy
+                    if (dx != 0 or dy != 0) and 0 <= nx < self.width and 0 <= ny < self.height:
+                        neighbor = self.board[ny][nx]
+                        if not neighbor.is_flag and not neighbor.is_open:
+                            self.reveal_cell(nx, ny)
+            self.update_buttons()
+            self.check_win()
 
     def on_left_click(self, x, y):
         if self.game_over or self.board[y][x].is_flag:
@@ -100,8 +126,8 @@ class Minesweeper(tk.Tk):
         if self.first_click:
             self.place_mines(x, y)
             self.start_time = time.time()
-            self.update_timer()
             self.first_click = False
+            self.update_timer()
         self.reveal_cell(x, y)
         self.update_buttons()
         self.check_win()
