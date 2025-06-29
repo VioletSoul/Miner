@@ -6,6 +6,7 @@ class StartDialog(tk.Toplevel):
     def __init__(self, master):
         super().__init__(master)
         self.title("Параметры игры")
+        self.resizable(False, False)  # Запрет изменения размера окна
         tk.Label(self, text="Размер поля (минимум 5):").grid(row=0, column=0, sticky="w")
         tk.Label(self, text="Количество мин:").grid(row=1, column=0, sticky="w")
         self.size_var = tk.IntVar(value=9)
@@ -24,6 +25,17 @@ class StartDialog(tk.Toplevel):
         self.destroy()
 
 class Cell:
+    colors = {
+        1: 'blue',
+        2: 'green',
+        3: 'red',
+        4: 'darkblue',
+        5: 'brown',
+        6: 'cyan',
+        7: 'black',
+        8: 'gray'
+    }
+
     def __init__(self, master, x, y, callback):
         self.x = x
         self.y = y
@@ -32,7 +44,8 @@ class Cell:
         self.is_flag = False
         self.button = tk.Button(master, width=2, height=1, font=('Arial', 14),
                                 command=self.open_cell)
-        self.button.bind('<Button-3>', self.toggle_flag)
+        self.button.bind('<Button-3>', self.toggle_flag)  # Правая кнопка мыши
+        self.button.bind('<Control-Button-1>', self.toggle_flag)  # Control+левый клик (Mac)
         self.callback = callback
 
     def open_cell(self):
@@ -53,7 +66,8 @@ class Cell:
 
     def show_number(self, n):
         if n > 0:
-            self.button.config(text=str(n), disabledforeground='blue')
+            color = self.colors.get(n, 'black')
+            self.button.config(text=str(n), disabledforeground=color)
         self.button.config(state=tk.DISABLED)
 
     def disable(self):
@@ -71,7 +85,7 @@ class Minesweeper:
         self.size = size
         self.mines_count = mines
         self.frame = tk.Frame(root)
-        self.frame.pack()
+        self.frame.grid(row=1, column=0, sticky='nw')
         self.cells = []
         self.mines = set()
         self.game_over = False
@@ -83,6 +97,9 @@ class Minesweeper:
         self.counts = self.calculate_counts()
         self.start_timer()
 
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.root.resizable(False, False)  # Запрет изменения размера главного окна
+
     def create_widgets(self):
         for i in range(self.size):
             row = []
@@ -91,12 +108,13 @@ class Minesweeper:
                 cell.button.grid(row=i, column=j)
                 row.append(cell)
             self.cells.append(row)
+        # Надписи и кнопка — сверху, слева
         self.status = tk.Label(self.root, text="Игра началась!", font=("Arial", 13))
-        self.status.pack(pady=5)
+        self.status.grid(row=0, column=0, sticky='w', padx=5, pady=(5,0))
         self.timer_label = tk.Label(self.root, text="Время: 0", font=("Arial", 13))
-        self.timer_label.pack()
+        self.timer_label.grid(row=0, column=1, sticky='w', padx=5, pady=(5,0))
         self.new_game_btn = tk.Button(self.root, text="Новая игра", font=("Arial", 12), command=self.new_game_dialog)
-        self.new_game_btn.pack(pady=5)
+        self.new_game_btn.grid(row=0, column=2, sticky='w', padx=5, pady=(5,0))
 
     def place_mines(self):
         self.mines = set()
@@ -147,6 +165,7 @@ class Minesweeper:
         self.game_over = True
         if self.timer_id:
             self.root.after_cancel(self.timer_id)
+            self.timer_id = None
         for i in range(self.size):
             for j in range(self.size):
                 cell = self.cells[i][j]
@@ -167,6 +186,9 @@ class Minesweeper:
         return True
 
     def new_game_dialog(self):
+        if self.timer_id:
+            self.root.after_cancel(self.timer_id)
+            self.timer_id = None
         self.frame.destroy()
         self.status.destroy()
         self.timer_label.destroy()
@@ -182,15 +204,22 @@ class Minesweeper:
         self.update_timer()
 
     def update_timer(self):
-        if self.game_over:
+        if self.game_over or not self.timer_label.winfo_exists():
             return
         elapsed = int(time.time() - self.start_time)
         self.timer_label.config(text=f"Время: {elapsed}")
         self.timer_id = self.root.after(1000, self.update_timer)
 
+    def on_close(self):
+        if self.timer_id:
+            self.root.after_cancel(self.timer_id)
+            self.timer_id = None
+        self.root.destroy()
+
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Сапёр")
+    root.resizable(False, False)  # Запрет изменения размера главного окна
     dialog = StartDialog(root)
     root.wait_window(dialog)
     if dialog.result:
