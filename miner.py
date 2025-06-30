@@ -4,7 +4,6 @@ import random
 import time
 import platform
 
-# Кроссплатформенный шрифт
 if platform.system() == "Darwin":
     FONT = ("Helvetica", 12, "bold")
 else:
@@ -12,13 +11,10 @@ else:
 
 CELL_SIZE = 32
 BG_COLOR = "#e0e0e0"
-BTN_COLOR = "#bdbdbd"      # Светло-серый для закрытых клеток
-OPEN_COLOR = "#f5f5f5"     # Почти белый для открытых клеток
+BTN_COLOR = "#b0b0b0"    # Цвет закрытой клетки
+OPEN_COLOR = "#e9e9e9"   # Цвет открытой клетки
 FLAG_COLOR = "#ff4444"
 MINE_COLOR = "#222"
-OPEN_BORDER = "#cce6ff"    # Светло-голубая рамка для открытых
-CLOSED_BORDER = "#bdbdbd"  # Серый бордер для закрытых
-
 NUMBER_COLORS = {
     1: "#1976d2", 2: "#388e3c", 3: "#d32f2f", 4: "#7b1fa2",
     5: "#ff8f00", 6: "#00838f", 7: "#c2185b", 8: "#455a64"
@@ -78,44 +74,22 @@ class Minesweeper(tk.Tk):
             field.grid_rowconfigure(y, minsize=CELL_SIZE)
             for x in range(self.width):
                 field.grid_columnconfigure(x, minsize=CELL_SIZE)
-                btn = tk.Button(
+                lbl = tk.Label(
                     field, width=2, height=1, font=FONT, bg=BTN_COLOR,
-                    relief="raised", highlightthickness=2, highlightbackground=CLOSED_BORDER,
-                    activebackground=BTN_COLOR,
-                    command=lambda x=x, y=y: self.on_left_click(x, y)
+                    relief="raised", borderwidth=1, anchor="center"
                 )
-                # Универсальные бинды для разных ОС
-                btn.bind("<ButtonPress-1>", lambda e, x=x, y=y: self.on_button_press(x, y, 1))
-                btn.bind("<ButtonRelease-1>", lambda e, x=x, y=y: self.on_button_release(x, y, 1))
-                btn.bind("<ButtonPress-3>", lambda e, x=x, y=y: self.on_button_press(x, y, 3))
-                btn.bind("<ButtonRelease-3>", lambda e, x=x, y=y: self.on_button_release(x, y, 3))
-                btn.bind("<Button-3>", lambda e, x=x, y=y: self.on_right_click(x, y))
-                # Для macOS (Button-2) и Ctrl+Click
-                btn.bind("<ButtonPress-2>", lambda e, x=x, y=y: self.on_button_press(x, y, 3))
-                btn.bind("<ButtonRelease-2>", lambda e, x=x, y=y: self.on_button_release(x, y, 3))
-                btn.bind("<Button-2>", lambda e, x=x, y=y: self.on_right_click(x, y))
-                btn.bind("<Control-Button-1>", lambda e, x=x, y=y: self.on_right_click(x, y))
-                btn.grid(row=y, column=x, padx=0, pady=0, sticky="nsew")
-                self.buttons[y][x] = btn
+                # Бинды для ЛКМ, ПКМ, Ctrl+ЛКМ, Button-2
+                lbl.bind("<Button-1>", lambda e, x=x, y=y: self.on_left_click(x, y))
+                lbl.bind("<Button-3>", lambda e, x=x, y=y: self.on_right_click(x, y))
+                lbl.bind("<Button-2>", lambda e, x=x, y=y: self.on_right_click(x, y))
+                lbl.bind("<Control-Button-1>", lambda e, x=x, y=y: self.on_right_click(x, y))
+                lbl.grid(row=y, column=x, padx=0, pady=0, sticky="nsew")
+                self.buttons[y][x] = lbl
         self.update_idletasks()
         total_width = field.winfo_reqwidth()
         total_height = top.winfo_reqheight() + field.winfo_reqheight()
         self.minsize(total_width, total_height)
         self.geometry(f"{total_width}x{total_height}")
-
-    def on_button_press(self, x, y, button):
-        if button == 1:
-            self.pressed_1 = (x, y)
-        elif button == 3:
-            self.pressed_3 = (x, y)
-
-    def on_button_release(self, x, y, button):
-        if self.pressed_1 == self.pressed_3 == (x, y) and self.board[y][x].is_open:
-            self.chord_open(x, y)
-        if button == 1:
-            self.pressed_1 = None
-        elif button == 3:
-            self.pressed_3 = None
 
     def chord_open(self, x, y):
         cell = self.board[y][x]
@@ -155,17 +129,15 @@ class Minesweeper(tk.Tk):
         if self.game_over or self.board[y][x].is_open:
             return
         cell = self.board[y][x]
-        btn = self.buttons[y][x]
+        lbl = self.buttons[y][x]
         if not cell.is_flag and self.flag_count == 0:
             return
         cell.is_flag = not cell.is_flag
         if cell.is_flag:
-            btn.config(text="🚩", fg=FLAG_COLOR, relief="raised", bg=BTN_COLOR,
-                       activebackground=BTN_COLOR, highlightbackground=CLOSED_BORDER, highlightthickness=2)
+            lbl.config(text="🚩", fg=FLAG_COLOR, relief="raised", bg=BTN_COLOR)
             self.flag_count -= 1
         else:
-            btn.config(text="", fg="black", relief="raised", bg=BTN_COLOR,
-                       activebackground=BTN_COLOR, highlightbackground=CLOSED_BORDER, highlightthickness=2)
+            lbl.config(text="", fg="black", relief="raised", bg=BTN_COLOR)
             self.flag_count += 1
         self.mine_label.config(text=f"💣 {self.flag_count}")
 
@@ -193,21 +165,19 @@ class Minesweeper(tk.Tk):
 
     def reveal_cell(self, x, y):
         cell = self.board[y][x]
-        btn = self.buttons[y][x]
+        lbl = self.buttons[y][x]
         if cell.is_open or cell.is_flag:
             return
         cell.is_open = True
-        btn.config(relief="sunken", bg=OPEN_COLOR, activebackground=OPEN_COLOR,
-                   highlightbackground=OPEN_BORDER, highlightthickness=2)
+        lbl.config(relief="sunken", bg=OPEN_COLOR)
         if cell.is_mine:
-            btn.config(text="💣", bg=MINE_COLOR, fg="white", activebackground=MINE_COLOR,
-                       highlightbackground=OPEN_BORDER, highlightthickness=2)
+            lbl.config(text="💣", bg=MINE_COLOR, fg="white")
             self.lose_game(x, y)
             return
         if cell.adjacent > 0:
-            btn.config(text=str(cell.adjacent), fg=NUMBER_COLORS[cell.adjacent])
+            lbl.config(text=str(cell.adjacent), fg=NUMBER_COLORS[cell.adjacent])
         else:
-            btn.config(text="")
+            lbl.config(text="")
             for dy in (-1, 0, 1):
                 for dx in (-1, 0, 1):
                     nx, ny = x+dx, y+dy
@@ -218,23 +188,19 @@ class Minesweeper(tk.Tk):
         for y in range(self.height):
             for x in range(self.width):
                 cell = self.board[y][x]
-                btn = self.buttons[y][x]
+                lbl = self.buttons[y][x]
                 if cell.is_open:
-                    btn.config(relief="sunken", bg=OPEN_COLOR, activebackground=OPEN_COLOR,
-                               highlightbackground=OPEN_BORDER, highlightthickness=2)
+                    lbl.config(relief="sunken", bg=OPEN_COLOR)
                     if cell.is_mine:
-                        btn.config(text="💣", bg=MINE_COLOR, fg="white", activebackground=MINE_COLOR,
-                                   highlightbackground=OPEN_BORDER, highlightthickness=2)
+                        lbl.config(text="💣", bg=MINE_COLOR, fg="white")
                     elif cell.adjacent > 0:
-                        btn.config(text=str(cell.adjacent), fg=NUMBER_COLORS[cell.adjacent])
+                        lbl.config(text=str(cell.adjacent), fg=NUMBER_COLORS[cell.adjacent])
                     else:
-                        btn.config(text="")
+                        lbl.config(text="")
                 elif cell.is_flag:
-                    btn.config(text="🚩", fg=FLAG_COLOR, relief="raised", bg=BTN_COLOR,
-                               activebackground=BTN_COLOR, highlightbackground=CLOSED_BORDER, highlightthickness=2)
+                    lbl.config(text="🚩", fg=FLAG_COLOR, relief="raised", bg=BTN_COLOR)
                 else:
-                    btn.config(text="", fg="black", bg=BTN_COLOR, relief="raised",
-                               activebackground=BTN_COLOR, highlightbackground=CLOSED_BORDER, highlightthickness=2)
+                    lbl.config(text="", fg="black", bg=BTN_COLOR, relief="raised")
 
     def lose_game(self, x, y):
         self.game_over = True
@@ -242,14 +208,12 @@ class Minesweeper(tk.Tk):
             self.after_cancel(self.timer_id)
         for row in self.board:
             for cell in row:
-                btn = self.buttons[cell.y][cell.x]
+                lbl = self.buttons[cell.y][cell.x]
                 if cell.is_mine:
-                    btn.config(text="💣", bg=MINE_COLOR, fg="white", activebackground=MINE_COLOR,
-                               highlightbackground=OPEN_BORDER, highlightthickness=2)
+                    lbl.config(text="💣", bg=MINE_COLOR, fg="white")
                 elif cell.is_flag and not cell.is_mine:
-                    btn.config(text="❌", fg="red")
-        self.buttons[y][x].config(bg="#ff4444", activebackground="#ff4444",
-                                  highlightbackground="#ff4444", highlightthickness=2)
+                    lbl.config(text="❌", fg="red")
+        self.buttons[y][x].config(bg="#ff4444")
         self.restart_btn.config(text="😵")
         messagebox.showinfo("Поражение", "Вы подорвались на мине!")
 
@@ -263,9 +227,9 @@ class Minesweeper(tk.Tk):
             self.after_cancel(self.timer_id)
         for row in self.board:
             for cell in row:
-                btn = self.buttons[cell.y][cell.x]
+                lbl = self.buttons[cell.y][cell.x]
                 if cell.is_mine:
-                    btn.config(text="🚩", fg=FLAG_COLOR)
+                    lbl.config(text="🚩", fg=FLAG_COLOR)
         self.restart_btn.config(text="😎")
         elapsed = int(time.time() - self.start_time) if self.start_time else 0
         messagebox.showinfo("Победа", f"Вы выиграли! Время: {elapsed} сек.")
