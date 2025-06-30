@@ -11,8 +11,8 @@ else:
 
 CELL_SIZE = 32
 BG_COLOR = "#e0e0e0"
-BTN_COLOR = "#b0b0b0"    # Цвет закрытой клетки
-OPEN_COLOR = "#e9e9e9"   # Цвет открытой клетки
+BTN_COLOR = "#b0b0b0"
+OPEN_COLOR = "#e9e9e9"
 FLAG_COLOR = "#ff4444"
 MINE_COLOR = "#222"
 NUMBER_COLORS = {
@@ -55,12 +55,12 @@ class Minesweeper(tk.Tk):
             widget.destroy()
         top = tk.Frame(self, bg=BG_COLOR)
         top.pack(fill="x")
-        self.mine_label = tk.Label(top, text=f"💣 {self.flag_count}", font=FONT, bg=BG_COLOR)
+        self.mine_label = tk.Label(top, text=f"💣 {self.flag_count}", font=FONT, bg=BG_COLOR, fg="#333333")
         self.mine_label.pack(side="left", padx=10, pady=5)
         self.restart_btn = tk.Button(top, text="😃", font=("Arial", 16), width=2,
                                      command=lambda: self.setup_game(self.difficulty))
         self.restart_btn.pack(side="left", padx=10)
-        self.timer_label = tk.Label(top, text="⏱ 0", font=FONT, bg=BG_COLOR)
+        self.timer_label = tk.Label(top, text="⏱ 0", font=FONT, bg=BG_COLOR, fg="#333333")
         self.timer_label.pack(side="right", padx=10, pady=5)
         for diff in DIFFICULTIES:
             mines = DIFFICULTIES[diff][2]
@@ -78,7 +78,6 @@ class Minesweeper(tk.Tk):
                     field, width=2, height=1, font=FONT, bg=BTN_COLOR,
                     relief="raised", borderwidth=1, anchor="center"
                 )
-                # Бинды для ЛКМ, ПКМ, Ctrl+ЛКМ, Button-2
                 lbl.bind("<Button-1>", lambda e, x=x, y=y: self.on_left_click(x, y))
                 lbl.bind("<Button-3>", lambda e, x=x, y=y: self.on_right_click(x, y))
                 lbl.bind("<Button-2>", lambda e, x=x, y=y: self.on_right_click(x, y))
