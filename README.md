@@ -11,25 +11,29 @@
 
 ## Description
 
-**Miner** is a Python implementation of the classic "Minesweeper" game. The gameplay fully replicates the original Windows Minesweeper: mines are randomly placed on the board, and the player's goal is to open all safe cells without detonating a mine. The number in each cell shows how many mines are adjacent to it, allowing logical deduction of mine locations.
+**Miner** is a modern implementation of the classic Minesweeper game in Python, featuring a visual style adapted for Windows, macOS, and Linux. The gameplay faithfully reproduces the original Windows Minesweeper: mines are randomly placed on the board, and your goal is to open all safe cells without triggering a mine. The number on each cell indicates how many mines are adjacent to it, helping you logically deduce the locations of mines.
 
-## How to play
+## How to Play
 
 - **Left mouse button** — open a cell.
 - **Right mouse button** — place or remove a flag (mark a suspected mine).
-- The goal: open all non-mine cells. If you open a mine — the game is over.
-- The numbers in the cells show how many mines are in the neighboring cells (horizontally, vertically, and diagonally).
+- **On Mac**: you can also use **Ctrl + left mouse button** to place or remove a flag.
+- The goal is to open all cells without mines. If you open a mine, the game is over.
+- Numbers on the cells show how many mines are adjacent (horizontally, vertically, and diagonally).
 
 ## Features
 
 - Classic Minesweeper mechanics
-- Random mine placement on the board
-- Counting the number of mines around each cell
-- Ability to place and remove flags
-- The game ends with a win (all safe cells opened) or a loss (mine opened)
-- All logic is implemented in a single file with no external dependencies
+- Modern, cross-platform appearance: opened and closed cells are always visually distinct, even on Mac
+- Defeat visualization: when you lose, all mines are revealed, cells get a reddish tint, incorrect flags are marked with a cross, and the exploded cell is highlighted in bright red
+- Readable interface: mine counter and timer are displayed in a dark font for better readability
+- Random mine placement
+- Automatic counting of adjacent mines
+- Flag placement and removal
+- Victory and defeat detection
+- Single-file, dependency-free implementation
 
-## Launch
+## Installation & Launch
 
 1. Make sure you have Python 3 installed.
 2. Download the `miner.py` file.
