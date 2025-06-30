@@ -15,6 +15,10 @@ BTN_COLOR = "#b0b0b0"
 OPEN_COLOR = "#e9e9e9"
 FLAG_COLOR = "#ff4444"
 MINE_COLOR = "#222"
+
+LOSE_BG = "#ffcccc"   # Светло-красный фон для проигрыша
+EXPLODE_BG = "#ff2222"  # Ярко-красный фон для клетки с миной, на которой подорвались
+
 NUMBER_COLORS = {
     1: "#1976d2", 2: "#388e3c", 3: "#d32f2f", 4: "#7b1fa2",
     5: "#ff8f00", 6: "#00838f", 7: "#c2185b", 8: "#455a64"
@@ -184,6 +188,9 @@ class Minesweeper(tk.Tk):
                         self.reveal_cell(nx, ny)
 
     def update_buttons(self):
+        # НЕ вызываем update_buttons после проигрыша!
+        if self.game_over:
+            return
         for y in range(self.height):
             for x in range(self.width):
                 cell = self.board[y][x]
@@ -209,10 +216,12 @@ class Minesweeper(tk.Tk):
             for cell in row:
                 lbl = self.buttons[cell.y][cell.x]
                 if cell.is_mine:
-                    lbl.config(text="💣", bg=MINE_COLOR, fg="white")
+                    lbl.config(text="💣", bg="#ff6666", fg="white", relief="sunken")
                 elif cell.is_flag and not cell.is_mine:
-                    lbl.config(text="❌", fg="red")
-        self.buttons[y][x].config(bg="#ff4444")
+                    lbl.config(text="❌", fg="red", bg=LOSE_BG, relief="sunken")
+                elif not cell.is_open:
+                    lbl.config(bg=LOSE_BG, relief="sunken", text="")
+        self.buttons[y][x].config(bg=EXPLODE_BG)
         self.restart_btn.config(text="😵")
         messagebox.showinfo("Поражение", "Вы подорвались на мине!")
 
