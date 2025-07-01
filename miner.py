@@ -59,17 +59,27 @@ class Minesweeper(tk.Tk):
             widget.destroy()
         top = tk.Frame(self, bg=BG_COLOR)
         top.pack(fill="x")
-        self.mine_label = tk.Label(top, text=f"💣 {self.flag_count}", font=FONT, bg=BG_COLOR, fg="#333333")
+        self.mine_label = tk.Label(
+            top, text=f"💣 {self.flag_count}", font=FONT, bg=BG_COLOR, fg="#333333", highlightthickness=0
+        )
         self.mine_label.pack(side="left", padx=10, pady=5)
-        self.restart_btn = tk.Button(top, text="😃", font=("Arial", 16), width=2,
-                                     command=lambda: self.setup_game(self.difficulty))
+        self.restart_btn = tk.Button(
+            top, text="😃", font=("Arial", 16), width=2,
+            command=lambda: self.setup_game(self.difficulty),
+            highlightthickness=0, bd=0, bg=BG_COLOR, activebackground=BG_COLOR
+        )
         self.restart_btn.pack(side="left", padx=10)
-        self.timer_label = tk.Label(top, text="⏱ 0", font=FONT, bg=BG_COLOR, fg="#333333")
+        self.timer_label = tk.Label(
+            top, text="⏱ 0", font=FONT, bg=BG_COLOR, fg="#333333", highlightthickness=0
+        )
         self.timer_label.pack(side="right", padx=10, pady=5)
         for diff in DIFFICULTIES:
             mines = DIFFICULTIES[diff][2]
-            tk.Button(top, text=f"{mines} мин", font=("Arial", 10),
-                      command=lambda d=diff: self.setup_game(d)).pack(side="left", padx=2)
+            tk.Button(
+                top, text=f"{mines} мин", font=("Arial", 10),
+                command=lambda d=diff: self.setup_game(d),
+                highlightthickness=0, bd=0, bg=BG_COLOR, activebackground=BG_COLOR
+            ).pack(side="left", padx=2)
         self.board = [[Cell(x, y) for x in range(self.width)] for y in range(self.height)]
         self.buttons = [[None for _ in range(self.width)] for _ in range(self.height)]
         field = tk.Frame(self, bg=BG_COLOR)
@@ -188,7 +198,6 @@ class Minesweeper(tk.Tk):
                         self.reveal_cell(nx, ny)
 
     def update_buttons(self):
-        # НЕ вызываем update_buttons после проигрыша!
         if self.game_over:
             return
         for y in range(self.height):
